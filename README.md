@@ -1,1 +1,1 @@
-# scriptz
+# smile-and-run
