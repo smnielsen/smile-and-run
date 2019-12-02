@@ -1,5 +1,13 @@
 module.exports = {
   name: 'Netlight',
   description: 'Run Netlight packages',
-  script: require('../src/netlight'),
+  type: 'node',
+  scripts: [
+    {
+      name: 'Mentors',
+      description: 'Scripts to print mentors',
+      type: 'node',
+      script: require('../src/netlight/mentors'),
+    },
+  ],
 };

@@ -42,7 +42,7 @@ const login = async (page, { username, password }) => {
 };
 
 module.exports = async () => {
-  log.info('Logging in to Netlight SSO'.bold);
+  log('Logging in to Netlight SSO'.bold);
   const opts = await inquirer.prompt([
     {
       name: 'username',

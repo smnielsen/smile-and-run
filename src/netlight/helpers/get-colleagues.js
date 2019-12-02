@@ -5,15 +5,17 @@ const axios = require('axios');
 const inquirer = require('inquirer');
 const getCookieAuth = require('./get-cookie-auth');
 const log = require('../../util/logger').create({ name: 'colleagues' });
+const config = require('../../config');
 
-const createCache = () => {
-  const filepath = path.resolve(__dirname, '.cache', `input-mentors.json`);
+const createCache = async () => {
+  const filepath = path.resolve(config.outputDir, `input-mentors.json`);
+
   const getCache = async () => {
     try {
       const res = await fs.readFile(filepath);
       return JSON.parse(res).data;
     } catch (err) {
-      log.info(`Could not read cache ${err.message}`.yellow);
+      log.warn(`Could not read cache ${err.message}`.yellow);
       return null;
     }
   };
@@ -34,7 +36,7 @@ const createCache = () => {
 };
 
 module.exports = async () => {
-  const cache = createCache();
+  const cache = await createCache();
   const cacheData = await cache.read();
 
   if (cacheData) {
@@ -51,7 +53,7 @@ module.exports = async () => {
     }
   }
 
-  log.info('>> Getting colleagues from API'.bold);
+  log('>> Getting colleagues from API');
   const authCookie = await getCookieAuth();
   assert(authCookie, 'Missing authcookie');
 

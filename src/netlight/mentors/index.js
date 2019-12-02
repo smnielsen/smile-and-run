@@ -1,17 +1,18 @@
 require('colors');
 const inquirer = require('inquirer');
-const getColleagues = require('../util/get-colleagues');
+const getColleagues = require('../helpers/get-colleagues');
 const mentors = require('./mentors');
 
 const log = require('../../util/logger').create({ name: 'mentors' });
 const run = async () => {
   log.empty();
-  log.info('== MENTORS =='.bold);
+
+  log.debug('Fetching all colleagues...');
 
   const colleagues = await getColleagues();
+  log.ok(`>> ${colleagues.length}`);
 
-  log(`== ${colleagues.length} colleagues ==`.green.bold);
-  const { office, sorting } = await inquirer.prompt([
+  const { office, method } = await inquirer.prompt([
     {
       name: 'office',
       type: 'list',
@@ -29,15 +30,15 @@ const run = async () => {
       ],
     },
     {
-      name: 'sorting',
+      name: 'method',
       type: 'list',
-      message: 'Choose sorting',
+      message: "Choose what method you'd like to run",
       default: 'level',
-      choices: ['level', 'match'],
+      choices: ['mentors', 'mentees', 'matching'],
     },
   ]);
 
-  return mentors(colleagues, { office, sorting });
+  return mentors(colleagues, { office, method });
 };
 
 module.exports = run;

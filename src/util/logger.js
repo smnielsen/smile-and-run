@@ -1,45 +1,85 @@
-require('colors');
+const clc = require('cli-color');
+const momentHelpers = require('./momentHelpers');
 
-const createLog = ({ name } = {}) => {
-  const printLevel = level => {
-    switch (level) {
-      case 'debug':
-        return 'DEBUG'.cyan.bold;
-      case 'info':
-        return 'INFO'.blue.bold;
-      case 'success':
-        return 'SUCCESS'.green.bold;
-      case 'warn':
-        return 'WARN'.yellow.bold;
-      case 'error':
-        return 'ERROR'.blue.bold;
-      default:
-        return '';
+/**
+ * @typedef {{ trace: Function, debug: Function, info: Function, warn: Function, error: Function, fatal: Function, ok: Function, create: Function }} Logger
+ */
+
+const colors = {
+  trace: clc.bold,
+  debug: clc.cyan.bold,
+  info: clc.blue.bold,
+  ok: clc.green.bold,
+  warn: clc.yellow.bold,
+  error: clc.red.bold,
+  fatal: clc.red.bold,
+};
+
+const DEFAULT_LOG_LEVEL = process.env.LOG_LEVEL || 'info';
+const LEVELS = {
+  TRACE: 1,
+  DEBUG: 2,
+  INFO: 3,
+  WARN: 4,
+  ERROR: 5,
+  FATAL: 6,
+  OK: 7,
+};
+
+const printTime = () => momentHelpers.getTimeString();
+const printName = name => (name ? clc.cyan(`[${name}]`) : '');
+const printLevel = level => colors[level](`${level.toUpperCase()}`);
+
+/**
+ * @typedef {('trace'|'debug'|'info'|'warn'|'error'|'fatal'|'ok')} LogLevel
+ * @param {{ name: string, level: LogLevel}} param0
+ * @returns {Logger}
+ */
+const createLogger = ({ name = '', level = DEFAULT_LOG_LEVEL } = {}) => {
+  const options = {
+    name,
+    level: level.toUpperCase(),
+  };
+
+  /**
+   *
+   * @param {string} msg
+   * @param {Function} logMethod
+   * @param {LogLevel} level
+   */
+  const logIfSafe = (msg, logMethod, level) => {
+    const upperLevel = level.toUpperCase();
+    if (LEVELS[upperLevel] >= LEVELS[options.level]) {
+      let prefix = '';
+      if (LEVELS[upperLevel] > LEVELS.debug) {
+        prefix = `${printTime()} | `;
+      }
+      prefix = `${prefix}${printName(name)} ${printLevel(level)}`;
+      logMethod(prefix, msg[0], ...msg.slice(1));
     }
   };
-  const start = level => `>> [${name}] ${printLevel(level)}`;
   // Create result object
-  const result = (...msg) => result.log(...msg);
+  const result = (...msg) => result.trace(...msg);
+
+  Object.keys(LEVELS).forEach(key => {
+    const keyLower = key.toLowerCase();
+    // eslint-disable-next-line no-console
+    let consoleMethod = console.log;
+    // eslint-disable-next-line no-console
+    if (console[keyLower] && keyLower !== 'trace') {
+      // eslint-disable-next-line no-console
+      consoleMethod = console[keyLower];
+    }
+    result[keyLower] = (...msg) => logIfSafe(msg, consoleMethod, keyLower);
+  });
 
   // eslint-disable-next-line no-console
-  result.empty = () => console.log('');
+  result.empty = () => console.log();
   // eslint-disable-next-line no-console
-  result.log = (...msg) => console.log(start(), ...msg);
-  // eslint-disable-next-line no-console
-  result.debug = (...msg) => console.log(`${start('debug')}`, ...msg);
-  // eslint-disable-next-line no-console
-  result.info = (...msg) => console.log(`${start('info')}`, ...msg);
-  // eslint-disable-next-line no-console
-  result.success = (...msg) =>
-    console.log(`${start('success')}`, msg[0].green, ...msg.slice(1));
-  // eslint-disable-next-line no-console
-  result.warn = (...msg) => console.warn(`${start('warn')}`.blue, ...msg);
-  // eslint-disable-next-line no-console
-  result.error = (...msg) => console.error(`${start('error')}`.blue, ...msg);
+  result.ok = (...msg) => logIfSafe(msg, console.log, 'ok');
 
-  result.create = opts => createLog(opts);
-
+  result.create = createLogger;
   return result;
 };
 
-module.exports = createLog({ name: 'smile-and-run' });
+module.exports = createLogger({ name: 'sac' });
