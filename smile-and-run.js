@@ -5,11 +5,13 @@ const fsLegacy = require('fs');
 const fs = require('fs').promises;
 const path = require('path');
 const inquirer = require('inquirer');
+// eslint-disable-next-line security/detect-child-process
+const childProcess = require('child_process');
 const config = require('./src/config');
 const log = require('./src/util/logger');
 
 /**
- * @typedef {{ name: string, description: string, script?: function, scripts?: ScriptConfig[] }} ScriptConfig
+ * @typedef {{ name: string, description: string, type: string, script?: any, scripts?: ScriptConfig[] }} ScriptConfig
  */
 /**
  *
@@ -45,10 +47,17 @@ const promptScripts = async (scripts, next) => {
 /**
  * @param {ScriptConfig} param0
  */
-const runScript = async ({ name, description, script, scripts }) => {
+const runScript = async ({ name, description, type, script, scripts }) => {
   // First check if a script exists
   if (script) {
-    return script();
+    switch (type) {
+      case 'sh': {
+        childProcess.execSync(`sh ${path.resolve(__dirname, script)}`);
+        return;
+      }
+      default:
+        return script();
+    }
   }
 
   if (scripts) {
@@ -62,6 +71,7 @@ const run = async () => {
   const files = await fs.readdir(path.resolve(__dirname, 'packages'));
 
   const scripts = files.reduce((memo, filename) => {
+    // eslint-disable-next-line security/detect-non-literal-require
     const script = require(path.resolve(__dirname, 'packages', filename));
 
     return [...memo, script];
@@ -72,6 +82,7 @@ const run = async () => {
   return runScript({
     name: 'Root',
     description: 'Choose which package to use',
+    type: 'node',
     scripts,
   });
 };

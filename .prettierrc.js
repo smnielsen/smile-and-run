@@ -1,4 +1,1 @@
-module.exports = {
-  singleQuote: true,
-  trailingComma: 'all',
-};
+module.exports = require('@smnielsen/prettier-config');
