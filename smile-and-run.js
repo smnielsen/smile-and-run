@@ -17,7 +17,7 @@ const log = require('./src/util/logger');
  * @param {Function} next
  */
 const promptScripts = async (scripts, next) => {
-  log.info('List available scripts');
+  log.debug('List available scripts');
 
   if (!fsLegacy.existsSync(config.outputDir)) {
     log.info(`Creating cache dir ${config.outputDir}`);
@@ -46,18 +46,12 @@ const promptScripts = async (scripts, next) => {
  * @param {ScriptConfig} param0
  */
 const runScript = async ({ name, description, script, scripts }) => {
-  log.empty();
-
   // First check if a script exists
   if (script) {
-    log.info(`${name.toUpperCase()}`.bold);
-    log.ok(`>> ${description}`);
     return script();
   }
 
   if (scripts) {
-    log.info(`== ${name.toUpperCase()} ==`.bold);
-    log.info(`>> ${description}`);
     return promptScripts(scripts, runScript);
   }
 
@@ -73,9 +67,11 @@ const run = async () => {
     return [...memo, script];
   }, []);
 
+  log.info(`>> SMILE-AND-RUN`);
+  log.info(`>> Scripts to help Simon`);
   return runScript({
-    name: 'Smile and Run',
-    description: 'Scripts to help out',
+    name: 'Root',
+    description: 'Choose which package to use',
     scripts,
   });
 };

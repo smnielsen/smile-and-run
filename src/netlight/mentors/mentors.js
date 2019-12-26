@@ -29,7 +29,8 @@ const printMentors = async (mappedByMentor, mainOffice) => {
   Object.keys(mappedByMentor).forEach(mentorId => {
     const mentees = mappedByMentor[mentorId];
     const mentor = mentees[0].mentor;
-    log(
+    // eslint-disable-next-line no-console
+    console.log(
       `${
         mentor.office.toLowerCase() === mainOffice.toLowerCase() ? '✅' : '⚠️'
       } ${mentor.fullName === 'unknown' ? 'No mentor' : mentor.fullName} in "${
@@ -41,7 +42,8 @@ const printMentors = async (mappedByMentor, mainOffice) => {
     });
     mentees.forEach(nler => {
       const { fullName, level, office, mentor, doing } = nler;
-      log(
+      // eslint-disable-next-line no-console
+      console.log(
         `   ${level}: ${
           office === mentor.office ? fullName.green : fullName.yellow
         } in "${office}" as "${doing}"`,
@@ -165,7 +167,6 @@ async function main(colleagues, { method: methodArg, office: officeArg } = {}) {
   const mainOffice = officeArg || process.argv[2];
   assert(mainOffice, 'Please define office as first parameter');
   const method = methodArg || process.argv[3] || 'mentors';
-  log('# Checking mentors in', mainOffice.blue.bold);
 
   const isInOffice = nler =>
     nler.office.toLowerCase() === mainOffice.toLowerCase();
@@ -221,7 +222,8 @@ async function main(colleagues, { method: methodArg, office: officeArg } = {}) {
       break;
     }
     case 'mentees': {
-      log(table.toString());
+      // eslint-disable-next-line no-console
+      console.log(table.toString());
       break;
     }
     case 'matching': {

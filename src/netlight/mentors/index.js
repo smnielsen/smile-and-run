@@ -7,10 +7,10 @@ const log = require('../../util/logger').create({ name: 'mentors' });
 const run = async () => {
   log.empty();
 
-  log.debug('Fetching all colleagues...');
+  log.info('Fetching all colleagues...');
 
   const colleagues = await getColleagues();
-  log.ok(`>> ${colleagues.length}`);
+  log.debug(`>> Found colleagues ${colleagues.length}`);
 
   const { office, method } = await inquirer.prompt([
     {
