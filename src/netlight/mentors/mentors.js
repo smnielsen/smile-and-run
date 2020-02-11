@@ -25,17 +25,15 @@ const writeOutput = async outputData => {
   log.info('Printed output to'.blue, `${outputFile}`);
 };
 
-const printMentors = async (mappedByMentor, mainOffice) => {
+const printMentors = async (mappedByMentor, isInOffice) => {
   Object.keys(mappedByMentor).forEach(mentorId => {
     const mentees = mappedByMentor[mentorId];
     const mentor = mentees[0].mentor;
     // eslint-disable-next-line no-console
     console.log(
-      `${
-        mentor.office.toLowerCase() === mainOffice.toLowerCase() ? '✅' : '⚠️'
-      } ${mentor.fullName === 'unknown' ? 'No mentor' : mentor.fullName} in "${
-        mentor.office
-      }" (${mentees.length} mentees):`.bold,
+      `${isInOffice(mentor) ? '✅' : '❌'} ${
+        mentor.fullName === 'unknown' ? 'No mentor' : mentor.fullName
+      } in "${mentor.office}" (${mentees.length} mentees):`.bold,
     );
     mentees.sort(({ level: la }, { level: lb }) => {
       return LEVELS[la] < LEVELS[lb] ? -1 : 1;
@@ -163,6 +161,21 @@ const getSortedMentees = netlightersInOffice => {
 
 const matchMentors = sortedMentees => {};
 
+const printMentorEmails = mentorsById => {
+  const emails = Object.keys(mentorsById)
+    .map(mentorId => {
+      const mentees = mentorsById[mentorId];
+      const mentor = mentees[0].mentor;
+
+      return mentor.email;
+    })
+    .join(',');
+  console.log('-- Mentor Emails - Copy/Paste into email --');
+  console.log('--------------------------');
+  console.log(emails);
+  console.log('--------------------------');
+};
+
 async function main(colleagues, { method: methodArg, office: officeArg } = {}) {
   const mainOffice = officeArg || process.argv[2];
   assert(mainOffice, 'Please define office as first parameter');
@@ -199,8 +212,8 @@ async function main(colleagues, { method: methodArg, office: officeArg } = {}) {
   // Verify data, print me
   // log(`Myself`, netlighters.find(nl => nl.fullName === 'Simon Nielsen'));
 
-  // Pretty print sorted by mentor
-  const mappedByMentor = netlighters.reduce((memo, { mentor, ...rest }) => {
+  // Only mentors that is situated in the mainOffice
+  const localMentorsById = netlighters.reduce((memo, { mentor, ...rest }) => {
     if (isInOffice(mentor)) {
       if (!memo[mentor.id]) {
         memo[mentor.id] = [];
@@ -213,12 +226,38 @@ async function main(colleagues, { method: methodArg, office: officeArg } = {}) {
     return memo;
   }, {});
 
+  // All mentors with a mentee in the main office
+  const officeMentorsById = netlighters.reduce(
+    (memo, { mentor, office, ...rest }) => {
+      if (isInOffice({ office })) {
+        if (!memo[mentor.id]) {
+          memo[mentor.id] = [];
+        }
+        memo[mentor.id].push({
+          ...rest,
+          office,
+          mentor,
+        });
+      }
+      return memo;
+    },
+    {},
+  );
+
   const netlightersInOffice = getOfficeNetlighters(netlighters, mainOffice);
   const { sortedMentees, table } = getSortedMentees(netlightersInOffice);
   // Print methods
   switch (method) {
+    case 'local-mentors': {
+      await printMentors(localMentorsById, isInOffice);
+      break;
+    }
     case 'mentors': {
-      await printMentors(mappedByMentor, mainOffice);
+      await printMentors(officeMentorsById, isInOffice);
+      break;
+    }
+    case 'mentor-emails': {
+      printMentorEmails(officeMentorsById);
       break;
     }
     case 'mentees': {
@@ -253,7 +292,7 @@ async function main(colleagues, { method: methodArg, office: officeArg } = {}) {
   await writeOutput(table.toString());
   await fs.writeFile(
     path.resolve(config.outputDir, 'mentor-mentee-tree.json'),
-    JSON.stringify(mappedByMentor),
+    JSON.stringify(localMentorsById),
   );
 }
 

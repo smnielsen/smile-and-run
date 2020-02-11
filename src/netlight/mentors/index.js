@@ -4,6 +4,7 @@ const getColleagues = require('../helpers/get-colleagues');
 const mentors = require('./mentors');
 
 const log = require('../../util/logger').create({ name: 'mentors' });
+
 const run = async () => {
   log.empty();
 
@@ -34,7 +35,7 @@ const run = async () => {
       type: 'list',
       message: "Choose what method you'd like to run",
       default: 'level',
-      choices: ['mentors', 'mentees', 'matching'],
+      choices: ['local-mentors', 'mentors', 'mentor-emails', 'mentees'],
     },
   ]);
 
