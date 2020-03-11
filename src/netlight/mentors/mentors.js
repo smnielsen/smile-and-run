@@ -6,17 +6,9 @@ const fs = require('fs').promises;
 const CliTable = require('cli-table');
 const log = require('../../util/logger').create({ name: 'mentors' });
 const config = require('../../config');
-
-const LEVELS = {
-  A: 0,
-  AC: 1,
-  C: 2,
-  SrC: 3,
-  AM: 4,
-  M: 5,
-  SrM: 6,
-  P: 7,
-};
+const getOfficeNetlighters = require('../helpers/getOfficeNetlighters');
+const LEVELS = require('../helpers/levels');
+const sort = require('../helpers/sortNetlighters');
 
 const writeOutput = async outputData => {
   const outputFile = path.resolve(config.outputDir, 'sar-mentors-output.log');
@@ -25,69 +17,60 @@ const writeOutput = async outputData => {
   log.info('Printed output to'.blue, `${outputFile}`);
 };
 
-const printMentors = async (mappedByMentor, isInOffice) => {
-  Object.keys(mappedByMentor).forEach(mentorId => {
+const printMentors = async (
+  mappedByMentor,
+  isInOffice,
+  { groupBy, showMentees = true } = {},
+) => {
+  let mentorIds = Object.keys(mappedByMentor);
+  if (groupBy) {
+    mentorIds = Object.values(
+      mentorIds.reduce((groups, mentorId) => {
+        const mentor = (
+          mappedByMentor[mentorId][0] || mappedByMentor[mentorId][1]
+        ).mentor;
+        if (mentor.id) {
+          console.log('mentor', mentor);
+          const groupByValue = mentor[groupBy];
+          if (!groups[groupByValue]) {
+            groups[groupByValue] = [];
+          }
+          const currentGroupMentorIds = groups[groupByValue];
+          currentGroupMentorIds.push(mentor.id);
+        } else {
+          groups.undefined = [];
+        }
+        return groups;
+      }, {}),
+    ).flat();
+  }
+
+  mentorIds.forEach(mentorId => {
     const mentees = mappedByMentor[mentorId];
     const mentor = mentees[0].mentor;
     // eslint-disable-next-line no-console
     console.log(
       `${isInOffice(mentor) ? '✅' : '❌'} ${
         mentor.fullName === 'unknown' ? 'No mentor' : mentor.fullName
-      } in "${mentor.office}" (${mentees.length} mentees):`.bold,
+      } in "${mentor.office}" with "${mentor.email}" (${
+        mentees.length
+      } mentees):`.bold,
     );
     mentees.sort(({ level: la }, { level: lb }) => {
       return LEVELS[la] < LEVELS[lb] ? -1 : 1;
     });
-    mentees.forEach(nler => {
-      const { fullName, level, office, mentor, doing } = nler;
-      // eslint-disable-next-line no-console
-      console.log(
-        `   ${level}: ${
-          office === mentor.office ? fullName.green : fullName.yellow
-        } in "${office}" as "${doing}"`,
-      );
-    });
+    if (showMentees) {
+      mentees.forEach(nler => {
+        const { fullName, level, office, mentor, doing } = nler;
+        // eslint-disable-next-line no-console
+        console.log(
+          `   ${level}: ${
+            office === mentor.office ? fullName.green : fullName.yellow
+          } in "${office}" as "${doing}"`,
+        );
+      });
+    }
   });
-};
-
-const getOfficeNetlighters = (netlighters, mainOffice) => {
-  // Filter city
-  const cityNl = netlighters.filter(
-    ({ office }) => office.toLowerCase() === mainOffice.toLowerCase(),
-  );
-
-  const sorts = {
-    level: ({ level: la }, { level: lb }) => {
-      return LEVELS[la] < LEVELS[lb] ? -1 : 1;
-    },
-    match: (
-      { office: oa, level: la, mentor: ma },
-      { office: ob, level: lb, mentor: mb },
-    ) => {
-      if (ma.office === oa) {
-        return 1;
-      }
-      if (mb.office === ob) {
-        return -1;
-      }
-      if (LEVELS[ma.level] < 6) {
-        if (LEVELS[mb.level] < 6) {
-          return LEVELS[la] < LEVELS[lb] ? -1 : 1;
-        }
-        return -1;
-      }
-      if (LEVELS[mb.level] < 6) {
-        if (LEVELS[ma.level] < 6) {
-          return LEVELS[la] < LEVELS[lb] ? -1 : 1;
-        }
-        return 1;
-      }
-      return LEVELS[la] < LEVELS[lb] ? -1 : 1;
-    },
-  };
-  const copy = [...cityNl];
-  copy.sort(sorts.level);
-  return copy;
 };
 
 const getSortedMentees = netlightersInOffice => {
@@ -162,11 +145,12 @@ const getSortedMentees = netlightersInOffice => {
 const matchMentors = sortedMentees => {};
 
 const printMentorEmails = mentorsById => {
+  console.log('-- Mentor Emails - long list --');
   const emails = Object.keys(mentorsById)
     .map(mentorId => {
       const mentees = mentorsById[mentorId];
       const mentor = mentees[0].mentor;
-
+      console.log(`${mentor.fullName}: ${mentor.email}`);
       return mentor.email;
     })
     .join(',');
@@ -213,7 +197,8 @@ async function main(colleagues, { method: methodArg, office: officeArg } = {}) {
   // log(`Myself`, netlighters.find(nl => nl.fullName === 'Simon Nielsen'));
 
   // Only mentors that is situated in the mainOffice
-  const localMentorsById = netlighters.reduce((memo, { mentor, ...rest }) => {
+  const sortedByName = sort(netlighters, { sortOn: 'name' });
+  const localMentorsById = sortedByName.reduce((memo, { mentor, ...rest }) => {
     if (isInOffice(mentor)) {
       if (!memo[mentor.id]) {
         memo[mentor.id] = [];
@@ -227,7 +212,7 @@ async function main(colleagues, { method: methodArg, office: officeArg } = {}) {
   }, {});
 
   // All mentors with a mentee in the main office
-  const officeMentorsById = netlighters.reduce(
+  const officeMentorsById = sortedByName.reduce(
     (memo, { mentor, office, ...rest }) => {
       if (isInOffice({ office })) {
         if (!memo[mentor.id]) {
@@ -246,6 +231,7 @@ async function main(colleagues, { method: methodArg, office: officeArg } = {}) {
 
   const netlightersInOffice = getOfficeNetlighters(netlighters, mainOffice);
   const { sortedMentees, table } = getSortedMentees(netlightersInOffice);
+
   // Print methods
   switch (method) {
     case 'local-mentors': {
@@ -258,6 +244,13 @@ async function main(colleagues, { method: methodArg, office: officeArg } = {}) {
     }
     case 'mentor-emails': {
       printMentorEmails(officeMentorsById);
+      break;
+    }
+    case 'mentors-by-office': {
+      await printMentors(officeMentorsById, isInOffice, {
+        showMentees: true,
+        groupBy: 'office',
+      });
       break;
     }
     case 'mentees': {

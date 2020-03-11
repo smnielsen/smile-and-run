@@ -1,9 +1,9 @@
 require('colors');
 const inquirer = require('inquirer');
 const getColleagues = require('../helpers/get-colleagues');
-const mentors = require('./mentors');
+const mentors = require('./netlighters');
 
-const log = require('../../util/logger').create({ name: 'mentors' });
+const log = require('../../util/logger').create({ name: 'netlighters' });
 
 const run = async () => {
   log.empty();
@@ -34,14 +34,8 @@ const run = async () => {
       name: 'method',
       type: 'list',
       message: "Choose what method you'd like to run",
-      default: 'level',
-      choices: [
-        'local-mentors',
-        'mentors',
-        'mentors-by-office',
-        'mentor-emails',
-        'mentees',
-      ],
+      default: 'by-doing',
+      choices: ['by-doing'],
     },
   ]);
 

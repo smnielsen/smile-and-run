@@ -9,5 +9,11 @@ module.exports = {
       type: 'node',
       script: require('../src/netlight/mentors'),
     },
+    {
+      name: 'Netlighters',
+      description: 'Scripts to print netlighters in different situations',
+      type: 'node',
+      script: require('../src/netlight/netlighters'),
+    },
   ],
 };
