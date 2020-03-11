@@ -2,6 +2,8 @@ require('colors');
 
 const assert = require('assert');
 const path = require('path');
+const clipboardy = require('clipboardy');
+
 const fs = require('fs').promises;
 const CliTable = require('cli-table');
 const markdownTable = require('markdown-table');
@@ -23,6 +25,13 @@ const printMentorsMarkdown = (
   mappedByMentor,
   { showMentees = true },
 ) => {
+  const summaryTable = [['**Office**', '**Mentors**', '**Mentees**']];
+  let totalOffices = 0;
+  let totalMentors = 0;
+  let totalMentees = 0;
+  let mentorsCount = 0;
+  let menteesCount = 0;
+  let currentOffice = '';
   const formattedAsTable = mentorIdsOrdered.reduce(
     (memo, mentorId) => {
       const mentees = mappedByMentor[mentorId];
@@ -30,12 +39,28 @@ const printMentorsMarkdown = (
 
       const nextMemo = [...memo];
       if (mentor.id) {
+        if (currentOffice !== mentor.office) {
+          nextMemo.push([`#### **${mentor.office}**`]);
+          if (currentOffice !== '') {
+            summaryTable.push([currentOffice, mentorsCount, menteesCount]);
+          }
+          totalOffices++;
+          currentOffice = mentor.office;
+          mentorsCount = 0;
+          menteesCount = 0;
+        }
+        totalMentors++;
+        totalMentees += mentees.length;
+
+        mentorsCount += 1;
+        menteesCount += mentees.length;
         // First push in the mentor
         nextMemo.push([
-          mentor.fullName,
-          mentees.length,
-          mentor.office,
-          mentor.level,
+          `**${mentor.fullName}**`,
+          `**${mentees.length}**`,
+          `**${mentor.office}**`,
+          `**${mentor.level}**`,
+          `**${LEVELS[mentor.level] > 4 ? 7 : 6}**`,
         ]);
 
         if (showMentees) {
@@ -46,6 +71,7 @@ const printMentorsMarkdown = (
               mentee.fullName,
               mentee.office,
               mentee.level,
+              '',
             ]);
           });
         }
@@ -53,13 +79,25 @@ const printMentorsMarkdown = (
 
       return nextMemo;
     },
-    [['Mentor', 'Mentees', 'Office', 'Level']],
+    [['**Mentor**', '**Mentees**', '**Office**', '**Level**', '**Maximum**']],
   );
-
-  console.log('-----------');
+  // Need to push the last office
+  summaryTable.push([currentOffice, mentorsCount, menteesCount]);
+  summaryTable.push(['**TOTAL**']);
+  summaryTable.push([totalOffices, totalMentors, totalMentees]);
+  log('-----------'.bold);
   const markdown = markdownTable(formattedAsTable);
+  const summaryMarkdown = markdownTable(summaryTable);
   console.log(markdown);
-  console.log('-----------');
+  log.info('>> Summary numbers');
+  console.log(summaryMarkdown);
+  log('-----------'.bold);
+  try {
+    clipboardy.writeSync(`${summaryMarkdown} \n ----- \n ${markdown}`);
+    log.ok('=> Copied content to clipboard...'.white.bold);
+  } catch (err) {
+    log.error(`Could not copy to clipboard ${err.message}`, err);
+  }
 };
 
 const printMentors = async (
@@ -68,6 +106,26 @@ const printMentors = async (
   { groupBy, showMentees = true, markdown = false } = {},
 ) => {
   let mentorIds = Object.keys(mappedByMentor);
+
+  // sort mentorIds
+  mentorIds.sort((idA, idB) => {
+    const mentorA = mappedByMentor[idA][0].mentor;
+    const mentorB = mappedByMentor[idB][0].mentor;
+    if (mentorA && mentorB) {
+      if (mentorA.office === mentorB.office) {
+        return mentorA.fullName < mentorB.fullName ? -1 : 1;
+      } else if (isInOffice(mentorA)) {
+        return -1;
+      } else if (isInOffice(mentorB)) {
+        return 1;
+      } else {
+        return mentorA.office < mentorB.office ? -1 : 1;
+      }
+    } else {
+      return 0;
+    }
+  });
+
   if (groupBy) {
     mentorIds = Object.values(
       mentorIds.reduce((groups, mentorId) => {
@@ -262,7 +320,7 @@ async function main(colleagues, { method: methodArg, office: officeArg } = {}) {
   // All mentors with a mentee in the main office
   const officeMentorsById = sortedByName.reduce(
     (memo, { mentor, office, ...rest }) => {
-      if (isInOffice({ office })) {
+      if (isInOffice(mentor) || isInOffice({ office })) {
         if (!memo[mentor.id]) {
           memo[mentor.id] = [];
         }
@@ -283,7 +341,7 @@ async function main(colleagues, { method: methodArg, office: officeArg } = {}) {
   // Print methods
   switch (method) {
     case 'local-mentors': {
-      await printMentors(localMentorsById, isInOffice);
+      printMentors(localMentorsById, isInOffice);
       break;
     }
     case 'local-mentors-markdown': {
@@ -294,7 +352,7 @@ async function main(colleagues, { method: methodArg, office: officeArg } = {}) {
       break;
     }
     case 'mentors': {
-      await printMentors(officeMentorsById, isInOffice);
+      printMentors(officeMentorsById, isInOffice);
       break;
     }
     case 'mentors-markdown': {

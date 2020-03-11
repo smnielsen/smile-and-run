@@ -16,6 +16,7 @@
     "axios": "^0.19.0",
     "cli-color": "^2.0.0",
     "cli-table": "^0.3.1",
+    "clipboardy": "^2.2.0",
     "colors": "^1.4.0",
     "dotenv": "^8.2.0",
     "enquirer": "^2.3.2",

@@ -2,7 +2,13 @@ const LEVELS = require('./levels');
 
 const sorts = {
   name: ({ fullName: nameA }, { fullName: nameB }) => {
-    return nameA > nameB ? -1 : 1;
+    return nameA < nameB ? -1 : 1;
+  },
+  mentorName: (
+    { mentor: { fullName: nameA } },
+    { mentor: { fullName: nameB } },
+  ) => {
+    return nameA < nameB ? -1 : 1;
   },
   level: ({ level: la }, { level: lb }) => {
     return LEVELS[la] < LEVELS[lb] ? -1 : 1;

@@ -73,8 +73,17 @@ module.exports = async () => {
     throw new Error(`Could not get colleagues: ${res.statusText}`);
   }
 
-  // Store cache
-  await cache.write(res.data);
+  const leftNetlight = [
+    'lucrece.rolland@netlight.com',
+    'anthon.johansson@netlight.com',
+    'philipp.grassinger@netlight.com',
+  ];
+  const netlighters = res.data.data.filter(
+    ([, email]) => !leftNetlight.includes(email),
+  );
 
-  return res.data.data;
+  // Store cache
+  await cache.write({ data: netlighters });
+
+  return netlighters;
 };
