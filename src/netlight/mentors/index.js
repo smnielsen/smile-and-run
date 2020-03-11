@@ -37,7 +37,9 @@ const run = async () => {
       default: 'level',
       choices: [
         'local-mentors',
+        'local-mentors-markdown',
         'mentors',
+        'mentors-markdown',
         'mentors-by-office',
         'mentor-emails',
         'mentees',

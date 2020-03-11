@@ -4,6 +4,7 @@ const assert = require('assert');
 const path = require('path');
 const fs = require('fs').promises;
 const CliTable = require('cli-table');
+const markdownTable = require('markdown-table');
 const log = require('../../util/logger').create({ name: 'mentors' });
 const config = require('../../config');
 const getOfficeNetlighters = require('../helpers/getOfficeNetlighters');
@@ -17,10 +18,54 @@ const writeOutput = async outputData => {
   log.info('Printed output to'.blue, `${outputFile}`);
 };
 
+const printMentorsMarkdown = (
+  mentorIdsOrdered,
+  mappedByMentor,
+  { showMentees = true },
+) => {
+  const formattedAsTable = mentorIdsOrdered.reduce(
+    (memo, mentorId) => {
+      const mentees = mappedByMentor[mentorId];
+      const mentor = mentees[0].mentor;
+
+      const nextMemo = [...memo];
+      if (mentor.id) {
+        // First push in the mentor
+        nextMemo.push([
+          mentor.fullName,
+          mentees.length,
+          mentor.office,
+          mentor.level,
+        ]);
+
+        if (showMentees) {
+          // Secondly all the mentees
+          sort(mentees, { sortOn: 'level' }).forEach(mentee => {
+            nextMemo.push([
+              '', // we don't add anything on first level for mentees
+              mentee.fullName,
+              mentee.office,
+              mentee.level,
+            ]);
+          });
+        }
+      }
+
+      return nextMemo;
+    },
+    [['Mentor', 'Mentees', 'Office', 'Level']],
+  );
+
+  console.log('-----------');
+  const markdown = markdownTable(formattedAsTable);
+  console.log(markdown);
+  console.log('-----------');
+};
+
 const printMentors = async (
   mappedByMentor,
   isInOffice,
-  { groupBy, showMentees = true } = {},
+  { groupBy, showMentees = true, markdown = false } = {},
 ) => {
   let mentorIds = Object.keys(mappedByMentor);
   if (groupBy) {
@@ -30,7 +75,6 @@ const printMentors = async (
           mappedByMentor[mentorId][0] || mappedByMentor[mentorId][1]
         ).mentor;
         if (mentor.id) {
-          console.log('mentor', mentor);
           const groupByValue = mentor[groupBy];
           if (!groups[groupByValue]) {
             groups[groupByValue] = [];
@@ -45,32 +89,36 @@ const printMentors = async (
     ).flat();
   }
 
-  mentorIds.forEach(mentorId => {
-    const mentees = mappedByMentor[mentorId];
-    const mentor = mentees[0].mentor;
-    // eslint-disable-next-line no-console
-    console.log(
-      `${isInOffice(mentor) ? '✅' : '❌'} ${
-        mentor.fullName === 'unknown' ? 'No mentor' : mentor.fullName
-      } in "${mentor.office}" with "${mentor.email}" (${
-        mentees.length
-      } mentees):`.bold,
-    );
-    mentees.sort(({ level: la }, { level: lb }) => {
-      return LEVELS[la] < LEVELS[lb] ? -1 : 1;
-    });
-    if (showMentees) {
-      mentees.forEach(nler => {
-        const { fullName, level, office, mentor, doing } = nler;
-        // eslint-disable-next-line no-console
-        console.log(
-          `   ${level}: ${
-            office === mentor.office ? fullName.green : fullName.yellow
-          } in "${office}" as "${doing}"`,
-        );
+  if (markdown) {
+    printMentorsMarkdown(mentorIds, mappedByMentor, { showMentees });
+  } else {
+    mentorIds.forEach(mentorId => {
+      const mentees = mappedByMentor[mentorId];
+      const mentor = mentees[0].mentor;
+      // eslint-disable-next-line no-console
+      console.log(
+        `${isInOffice(mentor) ? '✅' : '❌'} ${
+          mentor.fullName === 'unknown' ? 'No mentor' : mentor.fullName
+        } in "${mentor.office}" with "${mentor.email}" (${
+          mentees.length
+        } mentees):`.bold,
+      );
+      mentees.sort(({ level: la }, { level: lb }) => {
+        return LEVELS[la] < LEVELS[lb] ? -1 : 1;
       });
-    }
-  });
+      if (showMentees) {
+        mentees.forEach(nler => {
+          const { fullName, level, office, mentor, doing } = nler;
+          // eslint-disable-next-line no-console
+          console.log(
+            `   ${level}: ${
+              office === mentor.office ? fullName.green : fullName.yellow
+            } in "${office}" as "${doing}"`,
+          );
+        });
+      }
+    });
+  }
 };
 
 const getSortedMentees = netlightersInOffice => {
@@ -238,8 +286,22 @@ async function main(colleagues, { method: methodArg, office: officeArg } = {}) {
       await printMentors(localMentorsById, isInOffice);
       break;
     }
+    case 'local-mentors-markdown': {
+      printMentors(localMentorsById, isInOffice, {
+        showMentees: true,
+        markdown: true,
+      });
+      break;
+    }
     case 'mentors': {
       await printMentors(officeMentorsById, isInOffice);
+      break;
+    }
+    case 'mentors-markdown': {
+      printMentors(officeMentorsById, isInOffice, {
+        showMentees: true,
+        markdown: true,
+      });
       break;
     }
     case 'mentor-emails': {

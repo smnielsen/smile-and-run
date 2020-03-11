@@ -21,6 +21,7 @@
     "enquirer": "^2.3.2",
     "excel4node": "^1.7.2",
     "inquirer": "^7.0.0",
+    "markdown-table": "^2.0.0",
     "moment": "^2.24.0",
     "node-fetch": "^2.6.0",
     "puppeteer": "^2.0.0"
