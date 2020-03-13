@@ -35,7 +35,7 @@ const run = async () => {
       type: 'list',
       message: "Choose what method you'd like to run",
       default: 'by-doing',
-      choices: ['by-doing'],
+      choices: ['by-doing', 'sss'],
     },
   ]);
 

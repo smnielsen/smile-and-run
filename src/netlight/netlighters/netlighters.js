@@ -6,7 +6,7 @@ const fs = require('fs').promises;
 const log = require('../../util/logger').create({ name: 'netlighters' });
 const config = require('../../config');
 const getOfficeNetlighters = require('../helpers/getOfficeNetlighters');
-const LEVELS = require('../helpers/levels');
+const preAlignment = require('../helpers/preAlignment');
 
 const printNetlighters = (netlighters, { groupBy = 'office' } = {}) => {
   const reduced = netlighters.reduce((groups, nl, index) => {
@@ -65,6 +65,10 @@ async function main(colleagues, { method: methodArg, office: officeArg } = {}) {
   switch (method) {
     case 'by-doing': {
       printNetlighters(netlightersInOffice, { groupBy: 'doing' });
+      break;
+    }
+    case 'pre-alignment': {
+      await preAlignment(netlightersInOffice);
       break;
     }
     default: {
