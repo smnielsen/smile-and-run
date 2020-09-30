@@ -45,7 +45,7 @@ const result = {
   'SrC - Jonatan Kjellsson': 2,
   'SrC - Jonathan Herdt': 3,
   'SrC - Mario Bislick': 2,
-  'SrC - Mina Kleid': 2,
+  'SrC - Mina Kleid': 3,
   'SrC - Nigar Nazirova': 3,
   'SrC - Per-Victor Persson': 3,
   'SrC - Philipp Eiglsperger': 4,

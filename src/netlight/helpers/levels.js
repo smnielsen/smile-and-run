@@ -7,6 +7,7 @@ const LEVELS = {
   M: 5,
   SrM: 6,
   P: 7,
+  OPE: 8
 };
 
 module.exports = LEVELS;

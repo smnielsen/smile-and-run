@@ -28,14 +28,15 @@ const run = async () => {
         'copenhagen',
         'frankfurt',
         'zurich',
+        'all',
       ],
     },
     {
       name: 'method',
       type: 'list',
       message: "Choose what method you'd like to run",
-      default: 'by-doing',
-      choices: ['by-doing', 'sss'],
+      default: 'search',
+      choices: ['search', 'laf-list', 'by-doing', 'sss'],
     },
   ]);
 

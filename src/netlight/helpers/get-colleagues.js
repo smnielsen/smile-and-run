@@ -82,6 +82,8 @@ module.exports = async () => {
     ([, email]) => !leftNetlight.includes(email),
   );
 
+  console.log('netlighters[0]', netlighters[0]);
+
   // Store cache
   await cache.write({ data: netlighters });
 

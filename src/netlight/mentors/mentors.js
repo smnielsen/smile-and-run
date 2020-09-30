@@ -157,9 +157,9 @@ const printMentors = async (
       console.log(
         `${isInOffice(mentor) ? '✅' : '❌'} ${
           mentor.fullName === 'unknown' ? 'No mentor' : mentor.fullName
-        } in "${mentor.office}" with "${mentor.email}" (${
-          mentees.length
-        } mentees):`.bold,
+        }(${mentees.length} mentees): in "${mentor.office}" with "${
+          mentor.email
+        }"`.bold,
       );
       mentees.sort(({ level: la }, { level: lb }) => {
         return LEVELS[la] < LEVELS[lb] ? -1 : 1;

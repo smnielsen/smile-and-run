@@ -5,6 +5,9 @@ const getOfficeNetlighters = (
   mainOffice,
   { sortOn = 'level' } = {},
 ) => {
+  if (!mainOffice || mainOffice === 'all') {
+    return sort(netlighters, { sortOn });
+  }
   // Filter city
   const cityNl = netlighters.filter(
     ({ office }) => office.toLowerCase() === mainOffice.toLowerCase(),
