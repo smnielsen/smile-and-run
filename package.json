@@ -24,7 +24,7 @@
     "inquirer": "^7.0.0",
     "markdown-table": "^2.0.0",
     "moment": "^2.24.0",
-    "node-fetch": "^2.6.0",
+    "node-fetch": "^2.6.1",
     "puppeteer": "^2.0.0"
   },
   "devDependencies": {
