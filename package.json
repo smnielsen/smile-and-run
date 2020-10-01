@@ -13,34 +13,34 @@
     "lint": "eslint . --fix"
   },
   "dependencies": {
-    "axios": "^0.19.0",
+    "axios": "^0.20.0",
     "cli-color": "^2.0.0",
     "cli-table": "^0.3.1",
-    "clipboardy": "^2.2.0",
+    "clipboardy": "^2.3.0",
     "colors": "^1.4.0",
     "dotenv": "^8.2.0",
-    "enquirer": "^2.3.2",
+    "enquirer": "^2.3.6",
     "excel4node": "^1.7.2",
-    "inquirer": "^7.0.0",
+    "inquirer": "^7.3.3",
     "markdown-table": "^2.0.0",
-    "moment": "^2.24.0",
-    "node-fetch": "^2.6.0",
-    "puppeteer": "^2.0.0"
+    "moment": "^2.29.0",
+    "node-fetch": "^2.6.1",
+    "puppeteer": "^5.3.1"
   },
   "devDependencies": {
-    "@smnielsen/eslint-config": "^0.0.3",
-    "@smnielsen/prettier-config": "^0.0.3",
-    "eslint": "^6.7.2",
-    "eslint-config-prettier": "^6.7.0",
-    "eslint-config-standard": "^14.1.0",
-    "eslint-plugin-chai-expect": "^2.0.1",
-    "eslint-plugin-chai-friendly": "^0.5.0",
-    "eslint-plugin-import": "^2.18.2",
-    "eslint-plugin-mocha": "^6.2.2",
-    "eslint-plugin-node": "^10.0.0",
+    "@smnielsen/eslint-config": "^0.4.1",
+    "@smnielsen/prettier-config": "^0.1.0",
+    "eslint": "^7.10.0",
+    "eslint-config-prettier": "^6.12.0",
+    "eslint-config-standard": "^14.1.1",
+    "eslint-plugin-chai-expect": "^2.2.0",
+    "eslint-plugin-chai-friendly": "^0.6.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-mocha": "^8.0.0",
+    "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-security": "^1.4.0",
     "eslint-plugin-standard": "^4.0.1",
-    "prettier": "^1.19.1"
+    "prettier": "^2.1.2"
   }
 }
