@@ -53,38 +53,49 @@ module.exports = async () => {
     }
   }
 
-  log('>> Getting colleagues from API')
-  const authCookie = await getCookieAuth()
-  console.log('authCookie', authCookie)
-  assert(authCookie, 'Missing authcookie')
+  let authCookie
+  try {
+    log('>> Getting colleagues from API')
+    authCookie = await getCookieAuth()
+    log('>> authCookie', authCookie)
+    assert(authCookie, 'Missing authcookie')
+  } catch (err) {
+    console.error('Auth cookie fetch error', err.message)
+    return
+  }
 
   const url =
     'https://rebel.netlight.com/wp-admin/admin-ajax.php?action=contact_list'
 
-  const res = await axios({
-    method: 'get',
-    url,
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Cookie: authCookie,
-    },
-  })
+  try {
+    const res = await axios({
+      method: 'get',
+      url,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Cookie: authCookie,
+      },
+    })
 
-  if (res.status > 299) {
-    throw new Error(`Could not get colleagues: ${res.statusText}`)
+    if (res.status > 299) {
+      throw new Error(`Could not get colleagues: ${res.statusText}`)
+    }
+
+    const leftNetlight = [
+      'lucrece.rolland@netlight.com',
+      'anthon.johansson@netlight.com',
+      'philipp.grassinger@netlight.com',
+    ]
+    const netlighters = res.data.data.filter(
+      ([, email]) => !leftNetlight.includes(email),
+    )
+
+    // Store cache
+    await cache.write({ data: netlighters })
+
+    return netlighters
+  } catch (err) {
+    log.error('Failed to fetch colleages', err.message)
+    throw new Error(`get Colleagues Error: ${err.message}`)
   }
-
-  const leftNetlight = [
-    'lucrece.rolland@netlight.com',
-    'anthon.johansson@netlight.com',
-    'philipp.grassinger@netlight.com',
-  ]
-  const netlighters = res.data.data.filter(
-    ([, email]) => !leftNetlight.includes(email),
-  )
-
-  // Store cache
-  await cache.write({ data: netlighters })
-
-  return netlighters
 }
